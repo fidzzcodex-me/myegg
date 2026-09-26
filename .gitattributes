@@ -1,0 +1,9 @@
+# Force LF line endings for shell scripts no matter what tool commits them.
+# CRLF in a shebang line (#!/bin/bash\r) makes bash fail silently with
+# exit code 1 and zero output - exactly the failure mode this repo hit
+# when files were pushed through a web-based uploader.
+*.sh text eol=lf
+Dockerfile text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
