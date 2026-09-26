@@ -11,7 +11,7 @@
     "description": "Universal app hosting untuk Pterodactyl: Node.js/Bun/PHP/Python (pilih versi lewat dropdown) plus Go, Rust, C, dan C++ toolchain, browser automation lengkap (Puppeteer, Playwright, puppeteer-real-browser, Camoufox), static site hosting tanpa nulis server, cron job scheduler bawaan (support range/step/list), backup otomatis ke folder + Telegram dengan retensi custom, web terminal, dan Cloudflare Tunnel. Auto-detect runtime dan package manager dari startup command kamu.",
     "features": [],
     "docker_images": {
-        "ghcr.io/fidzzcodex-me/codex-tools:main": "ghcr.io/fidzzcodex-me/codex-tools:main"
+        "ghcr.io/fidzzcodex-me/myegg:main": "ghcr.io/fidzzcodex-me/myegg:main"
     },
     "file_denylist": [],
     "startup": "/bin/bash /entrypoint.sh",
@@ -24,7 +24,7 @@
     "scripts": {
         "installation": {
             "script": "#!/bin/bash\napt-get update -y && apt-get install -y curl git wget unzip\necho \"Ready!\"",
-            "container": "ghcr.io/fidzzcodex-me/codex-tools:main",
+            "container": "ghcr.io/fidzzcodex-me/myegg:main",
             "entrypoint": "/bin/bash"
         }
     },
