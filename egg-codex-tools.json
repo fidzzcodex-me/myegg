@@ -1,0 +1,383 @@
+{
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY",
+    "meta": {
+        "version": "PTDL_v2",
+        "update_url": null
+    },
+    "exported_at": "2026-09-26",
+    "name": "Codex Tools",
+    "author": "fidzzcodex@codex.io",
+    "uuid": "a2119a89-a3f6-5db8-97d6-a3a3d27b969d",
+    "description": "Universal app hosting untuk Pterodactyl: Node.js/Bun/PHP/Python (pilih versi lewat dropdown) plus Go, Rust, C, dan C++ toolchain, browser automation lengkap (Puppeteer, Playwright, puppeteer-real-browser, Camoufox), static site hosting tanpa nulis server, cron job scheduler bawaan (support range/step/list), backup otomatis ke folder + Telegram dengan retensi custom, web terminal, dan Cloudflare Tunnel. Auto-detect runtime dan package manager dari startup command kamu.",
+    "features": [],
+    "docker_images": {
+        "ghcr.io/fidzzcodex-me/codex-tools:main": "ghcr.io/fidzzcodex-me/codex-tools:main"
+    },
+    "file_denylist": [],
+    "startup": "/bin/bash /entrypoint.sh",
+    "config": {
+        "files": "{}",
+        "startup": "{\"done\": \"$\"}",
+        "logs": "{}",
+        "stop": "^C"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!/bin/bash\napt-get update -y && apt-get install -y curl git wget unzip\necho \"Ready!\"",
+            "container": "ghcr.io/fidzzcodex-me/codex-tools:main",
+            "entrypoint": "/bin/bash"
+        }
+    },
+    "variables": [
+        {
+            "name": "Startup Command",
+            "description": "Perintah buat jalanin aplikasi kamu. Otomatis kedetect butuh Node/PHP/Python yang mana.\nContoh: node index.js | npm start | python3 main.py | php artisan serve\nKosongin kalau pakai Static Host Mode di bawah.",
+            "env_variable": "STARTUP_CMD",
+            "default_value": "node index.js",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Static Host Mode",
+            "description": "true = jalanin server statis bawaan (python http.server), buat host situs HTML/CSS/JS tanpa perlu nulis app sama sekali. Startup Command diabaikan kalau ini true.",
+            "env_variable": "STATIC_HOST_MODE",
+            "default_value": "false",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|in:true,false",
+            "field_type": "text"
+        },
+        {
+            "name": "Static Host Directory",
+            "description": "Folder (relatif ke /home/container) yang mau di-host kalau Static Host Mode aktif. Upload file HTML kamu ke sini.",
+            "env_variable": "STATIC_HOST_DIR",
+            "default_value": "public",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|max:100",
+            "field_type": "text"
+        },
+        {
+            "name": "App Port",
+            "description": "Port yang di-listen aplikasi kamu (atau Static Host Mode). Samakan dengan port allocation server kamu di tab Network.",
+            "env_variable": "APP_PORT",
+            "default_value": "3000",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|integer|min:1024|max:65535",
+            "field_type": "text"
+        },
+        {
+            "name": "Node.js Version",
+            "description": "Pilih versi Node.js lewat dropdown. 22 = Maintenance LTS, 24 = Active LTS (rekomendasi produksi), 26 = Current. Cuma berlaku kalau Startup Command pakai node/npm/pnpm/yarn/bun.",
+            "env_variable": "NODE_VERSION",
+            "default_value": "24",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|in:22,24,26",
+            "field_type": "text"
+        },
+        {
+            "name": "Python Version",
+            "description": "Pilih versi Python lewat dropdown. Cuma berlaku kalau Startup Command pakai python3.",
+            "env_variable": "PYTHON_VERSION",
+            "default_value": "3.13",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|in:3.12,3.13,3.14",
+            "field_type": "text"
+        },
+        {
+            "name": "PHP Version",
+            "description": "Pilih versi PHP lewat dropdown.",
+            "env_variable": "PHP_VERSION",
+            "default_value": "8.4",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|in:8.2,8.3,8.4,8.5",
+            "field_type": "text"
+        },
+        {
+            "name": "Package Manager",
+            "description": "auto = deteksi otomatis dari lockfile (bun.lock/pnpm-lock.yaml/yarn.lock/default npm). Pilih manual kalau mau paksa salah satu. Khusus project Node.js.",
+            "env_variable": "INSTALL_DEPS",
+            "default_value": "auto",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|in:auto,npm,pnpm,yarn,bun",
+            "field_type": "text"
+        },
+        {
+            "name": "Auto Build",
+            "description": "Compile ulang project Go/Rust/C/C++ setiap restart sebelum start command dijalankan (kalau start command pakai binary path seperti ./app_bin).",
+            "env_variable": "AUTO_BUILD",
+            "default_value": "false",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|in:true,false",
+            "field_type": "text"
+        },
+        {
+            "name": "Skip Deps Install",
+            "description": "Lewati npm/pip/composer/go mod install setiap restart. Aktifkan kalau dependency sudah lengkap dan mau restart lebih cepat.",
+            "env_variable": "SKIP_DEPS_INSTALL",
+            "default_value": "false",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|in:true,false",
+            "field_type": "text"
+        },
+        {
+            "name": "Process Manager (PM2)",
+            "description": "true = auto-restart aplikasi kamu kalau crash, tanpa restart seluruh container. Node.js pakai PM2, bahasa lain (PHP/Python/dll) pakai Supervisor. Otomatis milih sesuai Startup Command.",
+            "env_variable": "PROCESS_MANAGER",
+            "default_value": "false",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|in:true,false",
+            "field_type": "text"
+        },
+        {
+            "name": "Headless Mode",
+            "description": "true = browser automation (Puppeteer/Playwright) jalan headless, hemat resource.\nfalse = jalan headful lewat Xvfb, rendering lebih mirip browser asli & bypass proteksi lebih kuat, tapi lebih berat.",
+            "env_variable": "HEADLESS_MODE",
+            "default_value": "true",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|in:true,false",
+            "field_type": "text"
+        },
+        {
+            "name": "Git Repository Address",
+            "description": "URL repo Git buat di-clone otomatis pas server start. Kosongin kalau mau upload file manual.",
+            "env_variable": "GIT_ADDRESS",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|max:300",
+            "field_type": "text"
+        },
+        {
+            "name": "Git Username",
+            "description": "Username Git, buat clone repo private. Kosongin kalau repo-nya public.",
+            "env_variable": "USERNAME",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|max:100",
+            "field_type": "text"
+        },
+        {
+            "name": "Git Access Token",
+            "description": "Personal Access Token Git, buat clone repo private. Kosongin kalau repo-nya public.",
+            "env_variable": "ACCESS_TOKEN",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|max:300",
+            "field_type": "text"
+        },
+        {
+            "name": "Git Branch",
+            "description": "Branch yang mau di-clone. Kosongin buat pakai branch default repo.",
+            "env_variable": "BRANCH",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|max:100",
+            "field_type": "text"
+        },
+        {
+            "name": "Auto Update on Restart",
+            "description": "true = otomatis git pull tiap kali server di-restart, biar selalu pakai kode terbaru dari repo.",
+            "env_variable": "AUTO_UPDATE",
+            "default_value": "false",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|in:true,false",
+            "field_type": "text"
+        },
+        {
+            "name": "User Upload Mode",
+            "description": "true = skip proses git clone, kamu upload file sendiri lewat File Manager panel.",
+            "env_variable": "USER_UPLOAD",
+            "default_value": "false",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|in:true,false",
+            "field_type": "text"
+        },
+        {
+            "name": "Cron Jobs",
+            "description": "Jadwal tugas otomatis, satu baris satu jadwal, format standar cron (menit jam tanggal bulan hari command).\nSupport: '*', angka pasti, list koma (1,15,30), range (1-5), dan step (*/5 atau 1-30/5).\nContoh: 0 3 * * * curl https://situskamu.com/ping\nDicek tiap 20 detik, bukan system cron daemon (biar aman dari batasan filesystem read-only).",
+            "env_variable": "CRON_JOBS",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|max:2000",
+            "field_type": "text"
+        },
+        {
+            "name": "Enable Auto Backup",
+            "description": "true = backup otomatis semua file ke folder .codex/backups sesuai interval di bawah.",
+            "env_variable": "ENABLE_AUTO_BACKUP",
+            "default_value": "false",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|in:true,false",
+            "field_type": "text"
+        },
+        {
+            "name": "Backup Interval (Hours)",
+            "description": "Interval backup otomatis, dalam jam.",
+            "env_variable": "BACKUP_INTERVAL_HOURS",
+            "default_value": "24",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|integer|min:1|max:168",
+            "field_type": "text"
+        },
+        {
+            "name": "Backup Retention Count",
+            "description": "Jumlah backup terakhir yang disimpan di .codex/backups, sisanya otomatis dihapus.",
+            "env_variable": "BACKUP_KEEP_COUNT",
+            "default_value": "5",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|integer|min:1|max:30",
+            "field_type": "text"
+        },
+        {
+            "name": "Backup Saat Server Stop",
+            "description": "true = jalanin satu backup ekstra tiap kali server dimatikan lewat panel (butuh Enable Auto Backup = true juga).",
+            "env_variable": "ENABLE_BACKUP_ON_STOP",
+            "default_value": "false",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|in:true,false",
+            "field_type": "text"
+        },
+        {
+            "name": "Backup to Telegram",
+            "description": "true = tiap backup juga dikirim ke Telegram (selain kesimpen di folder .codex/backups). Butuh Bot Token & Chat ID di bawah.",
+            "env_variable": "ENABLE_TELEGRAM_BACKUP",
+            "default_value": "false",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|in:true,false",
+            "field_type": "text"
+        },
+        {
+            "name": "Telegram Bot Token",
+            "description": "Wajib diisi kalau Backup to Telegram = true. Dapetin dari @BotFather di Telegram.",
+            "env_variable": "TELEGRAM_BOT_TOKEN",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|max:100",
+            "field_type": "text"
+        },
+        {
+            "name": "Telegram Chat/User ID",
+            "description": "Wajib diisi kalau Backup to Telegram = true. Chat ID atau User ID tujuan kirim file backup. Cek lewat @userinfobot di Telegram.",
+            "env_variable": "TELEGRAM_CHAT_ID",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|max:50",
+            "field_type": "text"
+        },
+        {
+            "name": "Enable Webhook Notifications",
+            "description": "Isi URL webhook (Discord/Slack/dll) buat dapat notifikasi pas server start dan stop.",
+            "env_variable": "WEBHOOK_URL",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|max:500",
+            "field_type": "text"
+        },
+        {
+            "name": "Webhook Custom Payload",
+            "description": "Custom JSON payload buat webhook. Placeholder yang bisa dipakai: {event}, {server}, {ip}, {time}. {event} bernilai start atau stop.",
+            "env_variable": "WEBHOOK_PAYLOAD",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|max:1000",
+            "field_type": "text"
+        },
+        {
+            "name": "Enable Web Terminal",
+            "description": "true = akses terminal langsung dari browser (via ttyd), tanpa perlu buka panel Pterodactyl.",
+            "env_variable": "ENABLE_WEB_TERMINAL",
+            "default_value": "false",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|in:true,false",
+            "field_type": "text"
+        },
+        {
+            "name": "Web Terminal Port",
+            "description": "Port buat akses web terminal.",
+            "env_variable": "WEB_TERMINAL_PORT",
+            "default_value": "7681",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|integer|min:1024|max:65535",
+            "field_type": "text"
+        },
+        {
+            "name": "Web Terminal Username",
+            "description": "Username login web terminal (basic auth).",
+            "env_variable": "WEB_TERMINAL_USER",
+            "default_value": "admin",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:32",
+            "field_type": "text"
+        },
+        {
+            "name": "Web Terminal Password",
+            "description": "WAJIB DIGANTI sebelum expose ke publik. Password login web terminal.",
+            "env_variable": "WEB_TERMINAL_PASSWORD",
+            "default_value": "changeme",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|min:6",
+            "field_type": "text"
+        },
+        {
+            "name": "Enable Cloudflare Tunnel",
+            "description": "true = expose server ke internet lewat Cloudflare Zero Trust Tunnel, tanpa perlu port forwarding manual. Butuh Cloudflare Tunnel Token.",
+            "env_variable": "ENABLE_CF_TUNNEL",
+            "default_value": "false",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|in:true,false",
+            "field_type": "text"
+        },
+        {
+            "name": "Cloudflare Tunnel Token",
+            "description": "Token dari Cloudflare Zero Trust dashboard > Networks > Tunnels. Wajib diisi kalau Enable Cloudflare Tunnel = true. Rahasiakan token ini!",
+            "env_variable": "CF_TOKEN",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|max:500",
+            "field_type": "text"
+        },
+        {
+            "name": "Live Stats Interval",
+            "description": "Interval (detik) buat nge-print ulang uptime/RAM/disk di console selama container jalan. Set 0 buat matiin.",
+            "env_variable": "LIVE_STATS_INTERVAL",
+            "default_value": "30",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|integer|min:0|max:3600",
+            "field_type": "text"
+        }
+    ]
+}
